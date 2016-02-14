@@ -1,0 +1,96 @@
+Popa Maria-Catalina 331CC
+
+Tema 1 - Micro Renderer si Resize 
+
+Part 1. Super Sampling Anti Aliasing
+
+	Solutia problemei este formata din 2 structuri. Prima, pixel, contine
+3 varilabile unsigned char pentru a retine cele 3 culori. Cea dea doau 
+structura, image, retine informatii despre latime, inaltine, tipul pozei si
+2 matrice, pentru imaginile color si cele gri.
+	Functiile resize pentru resize_factor par parcurg matricea corespunzatoare
+tipului de imagine, din resize_factor in resize_factor iar in interior se
+calculeaza suma elementelor din blocurile neparcurse de primele for-uri si se
+imparte la numarul lor.
+	Functiile resize pentru resize_factor = 3 par parcurg matricea corespunzatoare
+tipului de imagine, din resize_factor in resize_factor iar in interior se
+calculeaza suma elementelor inmultite cu kernelului gaussian corespunzator pozitiei
+din matricea GaussianKernel si se imparte la 16.
+
+	Scalabilitatea
+A fost masurata pe clusterul facultatii.
+
+	Cea mai eficienta paralelizare este folosind collapse(2) pentru cele 2 for-uri 
+exterioare. 
+
+	Imagine gri:
+
+					  1 thread       2 thread-uri     4 thread-uri    8 thread-uri
+
+resize_factor = 2     0.004572		  0.002524			0.001484		0.000964
+
+resize_factor = 3	  0.004503		  0.002511			0.001498		0.000989
+
+resize_factor = 4  	  0.003985		  0.002294			0.001302		0.000794
+
+resize_factor = 8 	  0.002635		  0.001536			0.001020		0.000731
+
+	Imagine color:
+
+resize_factor = 2     0.008806		  0.005881			0.003161		0.001790
+
+resize_factor = 3	  0.008806		  0.005881			0.003161		0.001790
+
+resize_factor = 4  	  0.006621		  0.003777			0.002092		0.001363
+
+resize_factor = 8 	  0.006621		  0.003777			0.002092		0.001363
+
+	Se observa faptul ca daca se mareste numarul de thread-uri timpul scade 
+aproape la jumatate. Cu cat resize_factor este mai mare, timpul scade deoarece
+blocurile din for pe care la executa fiecare thread sunt mai mari si sunt necesare
+mai putine thread-uri pentru a executa tot programul.
+
+	Paralelizare folosind reduction pentru calculul sumelor din cele 2 for-uri 
+interioare este mai eficient in cazul imaginilor gir dar mai ineficient in
+cazul imaginilor color.
+
+Imagine gri:
+
+					  1 thread     2 thread-uri     4 thread-uri    8 thread-uri
+
+resize_factor = 2     0.004655		  0.002711			0.000984		0.000889
+
+resize_factor = 3	  0.004096		  0.002191			0.001255		0.000803
+
+resize_factor = 4  	  0.003172		  0.001807			0.001123		0.000761
+
+resize_factor = 8 	  0.002630		  0.001527			0.000956		0.000707
+
+	Imagine color:
+
+resize_factor = 2     0.010025		  0.005465			0.003183		0.002035
+
+resize_factor = 3	  0.008894		  0.004751			0.003161		0.001778
+
+resize_factor = 4  	  0.008901		  0.004839			0.002703		0.001724
+
+resize_factor = 8 	  0.006730		  0.005730			0.002074		0.001513
+
+
+Part 2: Micro Renderer
+
+	Solutia problemei este formata dintr-o strucura ce contine inaltimea, 
+lungimea, tipul imaginii si o matrice in care se retin pixeli.
+	Functia initializare aloca dinamic memorie pentru imaginea ca va fi creata si
+o initializeaza fiecare fixel cu alb.
+	Functia render parcurge matricea si calculeaza pentru fiecare pixel distanta 
+pana la dreapta. Daca acesta este mai mica decat 3 pixelul se coloreaza in negru.
+
+
+Program este palalelizat folosind collapse(2)
+
+					 1 thread       2 thread-uri     4 thread-uri    8 thread-uri
+
+resolution = 100      0.000339		  0.000282		 	0.000274		0.000266
+
+resolution = 10000	  1.544956		  0.782164			0.391342		0.195935
